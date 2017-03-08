@@ -1,0 +1,115 @@
+#include <stdio.h>  
+#include <stdlib.h>  
+  
+#include <process.h>   
+#include <errno.h>   
+
+#include <string.h>
+#include <windows.h>
+
+//EXEC SQL INCLUDE SQLCA;  
+#include <sqlca.h>  
+void sql_error(char *msg);
+int connect_Timesten();
+  
+int main(int argc, char* argv[])  
+{
+	int i;
+
+	printf("连接数据库开始.....\n");   	
+	connect_Timesten();
+
+	for(i = 1; i<10;i++)
+	{
+		int tmp = i;
+		printf("id values:%d\n",tmp);
+		EXEC SQL INSERT INTO timesten_proc(
+				id,
+				bid,
+				did,
+				name,
+				test)
+			VALUES(
+				0,
+				'232',
+				'9999',
+				'proc',
+				'proc test');
+		if (0 != sqlca.sqlcode) 
+		{
+			printf("插入timesten_proc失败.[%d],[%s].\n", sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+		}
+		Sleep(5000);
+	}
+	//提交
+		EXEC SQL COMMIT;
+	// 断开连接
+    EXEC SQL COMMIT WORK RELEASE;
+	Sleep(50000);
+    return 0;  
+} 
+
+int connect_Timesten()
+{
+	EXEC SQL BEGIN DECLARE SECTION;  
+    char myusername[20], mypassword[20], myserver[20];  
+    EXEC SQL END DECLARE SECTION;  
+  
+	//连接方法一
+	/*
+    printf( "\n请输入用户名：" ); 
+	gets( (char*)myusername );  
+    //gets( (char*)myusername.arr );  
+    //myusername.len = (unsigned short) strlen( (char*)myusername.arr );  
+    printf( "\n请输入口令：" );  
+    gets( (char*)mypassword ); 
+    //gets( (char*)mypassword.arr );  
+    //mypassword.len = (unsigned short) strlen( (char*)mypassword.arr );  
+    printf("\n请输入服务器名：");  
+    gets( (char*)myserver );  
+    //gets( (char*)myserver.arr );  
+    //myserver.len = (unsigned short) strlen( (char*)myserver.arr );  
+	*/
+	
+	//连接方法二	
+    memset(myusername, 0x00, sizeof(myusername));
+    memset(mypassword, 0x00, sizeof(mypassword));
+    memset(myserver, 0x00, sizeof(myserver));
+	strcpy(myusername,"bjcmd");
+	strcpy(mypassword,"timesten");
+	strcpy(myserver,"timesten_cli");
+		
+    //EXEC SQL WHENEVER SQLERROR DO sql_error("ORACLE error--\n");
+    EXEC SQL CONNECT :myusername IDENTIFIED BY :mypassword USING :myserver;  
+      
+    if(sqlca.sqlcode == 0 )  
+	{
+		printf (" \n用户%s成功地连接到了服务器%s上！\n" , myusername, myserver);
+        //printf (" \n用户%s成功地连接到了服务器%s上！\n" , myusername.arr, myserver.arr); 
+	}  
+    else  
+	{
+        printf("\n连接数据库失败,退出程序: %ld,%s\n", sqlca.sqlcode,(char *)sqlca.sqlerrm.sqlerrmc);  
+		exit(0);
+	}	
+
+	return 0;
+}
+
+void sql_error(char *msg)
+{
+    char err_msg[128];
+    size_t buf_len, msg_len;
+
+    EXEC SQL WHENEVER SQLERROR CONTINUE;
+
+    printf("\nERR msg:%s\n", msg);
+    buf_len = sizeof (err_msg);
+    sqlglm((unsigned char *) err_msg, &buf_len, &msg_len);
+    printf("%.*s\n", (int) msg_len, err_msg);
+
+    EXEC SQL ROLLBACK RELEASE;
+
+	Sleep(8000);
+    exit(EXIT_FAILURE);
+}

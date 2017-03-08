@@ -1,0 +1,102 @@
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+/* 包含OCI头文件*/
+#include <oci.h>
+/* 包含SQLCA头文件*/
+#include <sqlca.h>
+#include <sqlcpr.h>
+#include "dbcmn.h"
+
+/*连接Oracle数据库*/
+int	 oraConnect(char *user, char *pass, char *netn)
+{
+	char temp[300];
+    EXEC SQL BEGIN DECLARE  SECTION;
+	    char	uid[11];
+	    char	pwd[21];
+	    char	net[21];
+    EXEC SQL END DECLARE SECTION;
+
+	if (!user)
+		strcpy(uid, "RMDS");
+	else
+		strcpy(uid, user);
+	if (!pass)
+		strcpy(pwd, "RMDS");
+	else
+		strcpy(pwd, pass);
+	if (!netn)
+		strcpy(net, "RMDS");
+	else
+		strcpy(net, netn);
+
+	EXEC SQL CONNECT :uid IDENTIFIED BY :pwd USING :net;
+	if (sqlca.sqlcode !=0 )
+	{
+		sprintf(temp, "fetch cursor fail,sqlcode=%ld,sqlserr=%s",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+		printf("  %s\n", temp); 
+		EXEC SQL ROLLBACK WORK RELEASE;
+		return -1;
+	}
+	return 0;
+}
+
+
+/*断开与Oracle数据库的连接*/
+void  oradisConnect()
+{
+	EXEC SQL ROLLBACK WORK RELEASE;
+}
+
+
+/*输出Oracle错误详细信息*/
+void  sql_err_rpt(char *message)
+{
+	
+	char temp[300];
+	sprintf(temp, "%s, oracle error %.70s (%d)\n", message, sqlca.sqlerrm.sqlerrmc, -sqlca.sqlcode);
+	printf("%s\n", temp);
+	//writedebugInfo(pipename, temp, 'E');
+    EXEC SQL WHENEVER SQLERROR CONTINUE;
+
+}
+
+
+
+/****************************************************************************
+   Generic error handler.  The 'routine' parameter should contain the name
+   of the routine executing when the error occured.  This would be specified
+   in the 'EXEC SQL WHENEVER SQLERROR DO sql_error()' statement.
+   sqlgls(), sqlglm()函数声明在#include <sqlcpr.h>头文件中
+作者：唐国平    时间：2006-6-3
+******************************************************************************/
+void sql_error(char *routine)
+{
+ 
+  char stm[512], msg[512];
+  size_t stmlen, sqlfc;
+  size_t msglen, buflen;
+  
+  stmlen = sizeof(stm);
+  msglen = sizeof(msg);
+  
+  /* Turn off the call to sql_error() to avoid a possible infinite loop */
+  EXEC SQL WHENEVER SQLERROR CONTINUE;
+
+  printf("\nOracle error while executing %s!\n", routine);
+  
+  /* 取得错误SQL语句 */
+  sqlgls(stm, &stmlen, &sqlfc);
+  printf("出错语句为：%.*s\n", stmlen, stm);
+  /* 取得错误信息 */
+  sqlglm(msg, &msglen, &buflen);
+  /* 显示错误原因 */ 
+  printf("%.*s\n", msglen, msg);
+  /* sqlca.sqlerrm.sqlerrmc最多只能存放70个字符 */
+  /* printf("%.*s\n", sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc); */
+  
+  EXEC SQL ROLLBACK WORK RELEASE;
+
+
+}

@@ -1,0 +1,33 @@
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+/*#include <oci.h>*/
+#include <sqlca.h>
+#include <sqlcpr.h>
+#include "dberr.h"
+#include "declare.h"
+#include "common.h"
+
+void ccsql_error(char *errmsg)
+{
+    char stm[1024],  msg[1024], err[1024];
+    size_t stmlen, sqlfc;
+    size_t msglen, buflen;
+
+    stmlen = sizeof(stm);
+    msglen = sizeof(msg);
+
+    EXEC SQL WHENEVER SQLERROR CONTINUE;
+
+    sqlgls(stm, &stmlen, &sqlfc);
+    printf("³ö´íÓï¾äÎª£º%.*s\n", stmlen, stm);
+    sqlglm(msg, &msglen, &buflen);
+    lprintf(disp.e,"%.*s\n", msglen, msg);
+
+    /*sprintf(err, "%.*s\n", msglen, msg);
+	
+    EXEC SQL ROLLBACK WORK RELEASE;
+	
+	
+    init_oracle(routine, configfile);*/
+}

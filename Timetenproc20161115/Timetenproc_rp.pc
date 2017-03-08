@@ -1,0 +1,45 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<sqlca.h>
+#include<oraca.h>
+#include<sqlcpr.h>
+
+int main(int argc, char *argv[])
+{
+	struct sqlca sqlca; //必须要有
+	EXEC SQL BEGIN DECLARE SECTION;
+	char sResult[20] = "";
+	//char sConnectString[100] = "用户名/密码@数据库服务名";/*连接串，根据实际情况*/
+	char sConnectString[100] = "bjcmd/timesten@timesten";	
+	char user[20]={0};
+	char pwd[20] ={0};
+	char dbname[20]={0};
+	EXEC SQL END DECLARE SECTION;
+	
+	strcpy(user,"bjcmd");
+	strcpy(pwd,"timesten");
+	strcpy(dbname,"timesten");
+	printf("We Will connect to: %s!\n", sConnectString);
+
+	
+// 执行DDL
+    EXEC SQL WHENEVER SQLERROR goto error;
+    EXEC SQL CREATE TABLE a (a int);
+	if(sqlca.sqlcode != 0)
+	printf("1sqlca.sqlcode = %d\n",sqlca.sqlcode);
+// 执行DML    
+    EXEC SQL INSERT INTO a values(12345);
+	if(sqlca.sqlcode != 0)
+	printf("2sqlca.sqlcode = %d\n",sqlca.sqlcode);
+// 断开连接
+    EXEC SQL COMMIT WORK RELEASE;
+	if(sqlca.sqlcode != 0)
+	printf("3sqlca.sqlcode = %d\n",sqlca.sqlcode);
+	Sleep(10000);
+    exit(0);
+
+error:
+	printf("SQLERROR!\n");
+	Sleep(10000);
+	return -2;
+}

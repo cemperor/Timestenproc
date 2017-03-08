@@ -1,0 +1,21 @@
+------------------------------------------------------------------------------
+INITCOUNT    0
+TNAME        timesten_cli
+USER         bjcmd
+PWD          timesten
+BINDIP	     127.0.0.1
+BINDPORT     5555
+ISTEST 1
+TYPE 237
+LOCONO 8888
+
+QMNAME       JCMDAM 
+REVQNAME     HXD1CQ   
+SNDQNAME     JCMDTOGPRSQ
+MSGID        JCMD 
+LAISRQ	     APPLJCMDFROMLAISQ       
+LAISSQ       APPLJWXTTOGPRSQ 
+MONGORQ      HISTORYQ
+FAULTQ       TEST85Q
+TRAINTYPE    237|
+-------------------------------------------------------------------------------
